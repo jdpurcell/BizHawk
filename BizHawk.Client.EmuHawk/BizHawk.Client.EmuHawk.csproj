@@ -2,7 +2,7 @@
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{DD448B37-BA3F-4544-9754-5406E8094723}</ProjectGuid>
@@ -84,7 +84,7 @@
       <HintPath>..\output\dll\nlua\NLua.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
+    <Reference Include="OpenTK, Version=3.0.1.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\References\OpenTK.dll</HintPath>
     </Reference>
@@ -93,17 +93,14 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.DirectoryServices" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data.DataSetExtensions">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" Condition=" '$(OS)' == 'Windows_NT' " />
@@ -575,7 +572,7 @@
     <Compile Include="CustomControls\FolderBrowserDialogEx.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="CustomControls\GDIRenderer.cs" />
+    <Compile Include="CustomControls\GDI.cs" />
     <Compile Include="CustomControls\HexTextBox.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -592,6 +589,14 @@
       <DependentUpon>InputRoll.cs</DependentUpon>
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="CustomControls\InputRoll.Drawing.GDI.cs">
+      <DependentUpon>InputRoll.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="CustomControls\InputRoll.Drawing.GDIP.cs">
+      <DependentUpon>InputRoll.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="CustomControls\MenuButton.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -603,6 +608,30 @@
     </Compile>
     <Compile Include="CustomControls\MsgBox.designer.cs">
       <DependentUpon>MsgBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CustomControls\PlatformAgnosticVirtualListView.API.cs">
+      <DependentUpon>PlatformAgnosticVirtualListView.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="CustomControls\PlatformAgnosticVirtualListView.Classes.cs">
+      <DependentUpon>PlatformAgnosticVirtualListView.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="CustomControls\PlatformAgnosticVirtualListView.Drawing.cs">
+      <DependentUpon>PlatformAgnosticVirtualListView.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="CustomControls\PlatformAgnosticVirtualListView.EventHandlers.cs">
+      <DependentUpon>PlatformAgnosticVirtualListView.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="CustomControls\PlatformAgnosticVirtualListView.Helpers.cs">
+      <DependentUpon>PlatformAgnosticVirtualListView.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="CustomControls\PlatformAgnosticVirtualListView.Properties.cs">
+      <DependentUpon>PlatformAgnosticVirtualListView.cs</DependentUpon>
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="CustomControls\PrereqsAlert.cs">
       <SubType>Form</SubType>
@@ -642,6 +671,7 @@
     </Compile>
     <Compile Include="CustomControls\VirtualListView.cs" />
     <Compile Include="CustomControls\Win32.cs" />
+    <Compile Include="CustomControls\Win32GDIRenderer.cs" />
     <Compile Include="DisplayManager\DisplayManager.cs" />
     <Compile Include="DisplayManager\DisplaySurface.cs" />
     <Compile Include="DisplayManager\FilterManager.cs" />
@@ -746,6 +776,9 @@
     </Compile>
     <Compile Include="OpenAdvancedChooser.Designer.cs">
       <DependentUpon>OpenAdvancedChooser.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CustomControls\PlatformAgnosticVirtualListView.cs">
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="PlatformChooser.cs">
       <SubType>Form</SubType>
@@ -1804,6 +1837,10 @@
       <Project>{E6B436B1-A3CD-4C9A-8F76-5D7154726884}</Project>
       <Name>BizHawk.Bizware.BizwareGL.SlimDX</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Bizware\BizHawk.Bizware.BizwareGL.Vulkan\BizHawk.Bizware.BizwareGL.Vulkan.csproj">
+      <Project>{538947c1-b7f6-8a0d-c976-41ee5160cfb1}</Project>
+      <Name>BizHawk.Bizware.BizwareGL.Vulkan</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Bizware\BizHawk.Bizware.BizwareGL\BizHawk.Bizware.BizwareGL.csproj">
       <Project>{9F84A0B2-861E-4EF4-B89B-5E2A3F38A465}</Project>
       <Name>BizHawk.Bizware.BizwareGL</Name>
@@ -2262,6 +2299,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="config\Saturn\" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

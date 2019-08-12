@@ -44,6 +44,7 @@ namespace BizHawk.Client.EmuHawk
 			rbOpenGL.Checked = Global.Config.DispMethod == Config.EDispMethod.OpenGL;
 			rbGDIPlus.Checked = Global.Config.DispMethod == Config.EDispMethod.GdiPlus;
 			rbD3D9.Checked = Global.Config.DispMethod == Config.EDispMethod.SlimDX9;
+			rbVulkan.Checked = Global.Config.DispMethod == Config.EDispMethod.Vulkan;
 
 			cbStatusBarWindowed.Checked = Global.Config.DispChrome_StatusBarWindowed;
 			cbCaptionWindowed.Checked = Global.Config.DispChrome_CaptionWindowed;
@@ -101,6 +102,13 @@ namespace BizHawk.Client.EmuHawk
 				cbAlternateVsync.Enabled = false;
 				label13.Enabled = false;
 				label8.Enabled = false;
+			}
+
+			if (OSTailoredCode.CurrentOS != OSTailoredCode.DistinctOS.Linux)
+			{
+				// Disable Vulkan where untested
+				rbVulkan.Enabled = false;
+				label14.Enabled = false;
 			}
 		}
 
@@ -188,6 +196,8 @@ namespace BizHawk.Client.EmuHawk
 				Global.Config.DispMethod = Config.EDispMethod.GdiPlus;
 			if(rbD3D9.Checked)
 				Global.Config.DispMethod = Config.EDispMethod.SlimDX9;
+			if (rbVulkan.Checked)
+				Global.Config.DispMethod = Config.EDispMethod.Vulkan;
 
 			int.TryParse(txtCropLeft.Text, out Global.Config.DispCropLeft);
 			int.TryParse(txtCropTop.Text, out Global.Config.DispCropTop);

@@ -58,8 +58,9 @@ namespace BizHawk.Client.EmuHawk
 				if (AskSaveChanges())
 				{
 					SaveColumnInfo(LuaListView, Settings.Columns);
-					
-					GlobalWin.DisplayManager.ClearLuaSurfaces();
+
+					if (GlobalWin.DisplayManager != null)
+						GlobalWin.DisplayManager.ClearLuaSurfaces();
 
 					if (GlobalWin.DisplayManager.ClientExtraPadding != Padding.Empty)
 					{
@@ -186,9 +187,9 @@ namespace BizHawk.Client.EmuHawk
 			}
 
 			var currentScripts = LuaImp?.ScriptList; // Temp fix for now
-			LuaImp = OSTailoredCode.CurrentOS == OSTailoredCode.DistinctOS.Windows
+			LuaImp = OSTailoredCode.CurrentOS == OSTailoredCode.DistinctOS.Windows //TODO necessary?
 				? (PlatformEmuLuaLibrary) new EmuLuaLibrary(Emulator.ServiceProvider)
-				: (PlatformEmuLuaLibrary) new NotReallyLuaLibrary();
+				: new EmuLuaLibrary(Emulator.ServiceProvider); //NotReallyLuaLibrary()
 			if (currentScripts != null)
 			{
 				LuaImp.ScriptList.AddRange(currentScripts);

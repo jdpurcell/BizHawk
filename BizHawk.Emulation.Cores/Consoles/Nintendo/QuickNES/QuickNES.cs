@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-using BizHawk.Emulation.Common;
+using BizHawk.Common;
 using BizHawk.Common.BizInvoke;
+using BizHawk.Emulation.Common;
 
 namespace BizHawk.Emulation.Cores.Consoles.Nintendo.QuickNES
 {
@@ -21,7 +22,16 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.QuickNES
 	{
 		static QuickNES()
 		{
-			Resolver = new DynamicLibraryImportResolver(LibQuickNES.dllname);
+			switch (OSTailoredCode.CurrentOS)
+			{
+				case OSTailoredCode.DistinctOS.Linux:
+				case OSTailoredCode.DistinctOS.macOS:
+					Resolver = new DynamicLibraryImportResolver("libquicknes.dll.so.0.7.0");
+					break;
+				case OSTailoredCode.DistinctOS.Windows:
+					Resolver = new DynamicLibraryImportResolver("libquicknes.dll");
+					break;
+			}
 			QN = BizInvoker.GetInvoker<LibQuickNES>(Resolver, CallingConventionAdapters.Native);
 			QN.qn_setup_mappers();
 		}
@@ -29,20 +39,30 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.QuickNES
 		[CoreConstructor("NES")]
 		public QuickNES(CoreComm comm, byte[] file, object settings, object syncSettings)
 		{
+			switch (OSTailoredCode.CurrentOS)
+			{
+				case OSTailoredCode.DistinctOS.Linux:
+				case OSTailoredCode.DistinctOS.macOS:
+					FP = new Unix_FPCtrl();
+					break;
+				case OSTailoredCode.DistinctOS.Windows:
+					FP = new Win32_FPCtrl();
+					break;
+			}
+
 			using (FP.Save())
 			{
 				ServiceProvider = new BasicServiceProvider(this);
 				CoreComm = comm;
-				
+
 				Context = QN.qn_new();
 				if (Context == IntPtr.Zero)
 				{
-					throw new InvalidOperationException($"{nameof(QN.qn_new)}() returned NULL");
+					throw new InvalidOperationException("qn_new() returned NULL");
 				}
 
 				try
 				{
-
 					file = FixInesHeader(file);
 					LibQuickNES.ThrowStringError(QN.qn_loadines(Context, file, file.Length));
 
@@ -70,7 +90,7 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.QuickNES
 					Dispose();
 					throw;
 				}
-			}
+			}				
 		}
 
 		static readonly LibQuickNES QN;
@@ -80,7 +100,13 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.QuickNES
 
 		#region FPU precision
 
-		private class FPCtrl : IDisposable
+		private interface IFPCtrl : IDisposable
+		{
+			IDisposable Save();
+		}
+
+
+		private class Win32_FPCtrl : IFPCtrl
 		{
 			[DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
 			public static extern uint _control87(uint @new, uint mask);
@@ -105,7 +131,17 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.QuickNES
 			}
 		}
 
-		FPCtrl FP = new FPCtrl();
+		private class Unix_FPCtrl : IFPCtrl
+		{
+			public IDisposable Save()
+			{
+				return this;
+			}
+			public void Dispose()
+			{ }
+		}
+
+		IFPCtrl FP;
 
 		#endregion
 
@@ -210,9 +246,9 @@ namespace BizHawk.Emulation.Cores.Consoles.Nintendo.QuickNES
 
 				if (CB1 != null) CB1();
 				if (CB2 != null) CB2();
-			}
 
-			return true;
+				return true;
+			}	
 		}
 
 		IntPtr Context;
