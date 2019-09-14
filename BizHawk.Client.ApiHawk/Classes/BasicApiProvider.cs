@@ -53,7 +53,6 @@ namespace BizHawk.Client.ApiHawk
 
 		public object GetApi(Type t)
 		{
-			IExternalAPI Api;
 			KeyValuePair<Type, IExternalAPI>[] k = _Apis.Where(kvp => t.IsAssignableFrom(kvp.Key)).ToArray();
 			if (k.Length > 0)
 			{

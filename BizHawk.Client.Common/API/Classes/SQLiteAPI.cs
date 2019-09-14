@@ -66,7 +66,7 @@ namespace BizHawk.Client.Common
 				return "Command ran successfully";
 
 			}
-			catch (NullReferenceException nullEX)
+			catch (NullReferenceException)
 			{
 				return "Database not open.";
 			}
