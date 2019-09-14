@@ -3,9 +3,7 @@ using System.ComponentModel;
 
 using NLua;
 
-using BizHawk.Client.Common;
-
-namespace BizHawk.Client.EmuHawk
+namespace BizHawk.Client.Common
 {
 	[Description("A library for setting and retrieving dynamic data that will be saved and loaded with savestates")]
 	public sealed class UserDataLuaLibrary : LuaLibraryBase

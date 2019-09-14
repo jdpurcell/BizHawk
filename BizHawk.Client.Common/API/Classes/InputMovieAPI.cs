@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-using BizHawk.Client.Common;
-
-namespace BizHawk.Client.ApiHawk
+namespace BizHawk.Client.Common
 {
 	public sealed class InputMovieAPI : IInputMovie
 	{

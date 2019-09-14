@@ -1,9 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 
-using BizHawk.Client.Common;
-
-namespace BizHawk.Client.ApiHawk
+namespace BizHawk.Client.Common
 {
 	public sealed class UserDataAPI : IUserData
 	{
