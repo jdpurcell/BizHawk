@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 
-using SlimDX;
-using SlimDX.Multimedia;
-using SlimDX.XAudio2;
+using Vortice.Multimedia;
+using Vortice.XAudio2;
 
 using BizHawk.Client.Common;
 
@@ -14,22 +14,17 @@ namespace BizHawk.Client.EmuHawk
 	{
 		private bool _disposed;
 		private Sound _sound;
-		private XAudio2 _device;
-		private MasteringVoice _masteringVoice;
-		private SourceVoice _sourceVoice;
+		private IXAudio2 _device;
+		private IXAudio2MasteringVoice _masteringVoice;
+		private IXAudio2SourceVoice _sourceVoice;
 		private BufferPool _bufferPool;
 		private long _runningSamplesQueued;
 
 		public XAudio2SoundOutput(Sound sound)
 		{
 			_sound = sound;
-			_device = new XAudio2();
-			int? deviceIndex = Enumerable.Range(0, _device.DeviceCount)
-				.Select(n => (int?)n)
-				.FirstOrDefault(n => _device.GetDeviceDetails(n.Value).DisplayName == Global.Config.SoundDevice);
-			_masteringVoice = deviceIndex == null ?
-				new MasteringVoice(_device, Sound.ChannelCount, Sound.SampleRate) :
-				new MasteringVoice(_device, Sound.ChannelCount, Sound.SampleRate, deviceIndex.Value);
+			_device = new IXAudio2();
+			_masteringVoice = _device.CreateMasteringVoice(Sound.ChannelCount, Sound.SampleRate);
 		}
 
 		public void Dispose()
@@ -47,10 +42,7 @@ namespace BizHawk.Client.EmuHawk
 
 		public static IEnumerable<string> GetDeviceNames()
 		{
-			using XAudio2 device = new XAudio2();
-			return Enumerable.Range(0, device.DeviceCount)
-				.Select(n => device.GetDeviceDetails(n).DisplayName)
-				.ToList(); // enumerate before local var device is disposed
+			return Enumerable.Empty<string>();
 		}
 
 		private int BufferSizeSamples { get; set; }
@@ -67,17 +59,7 @@ namespace BizHawk.Client.EmuHawk
 			BufferSizeSamples = Sound.MillisecondsToSamples(Global.Config.SoundBufferSizeMs);
 			MaxSamplesDeficit = BufferSizeSamples;
 
-			var format = new WaveFormat
-				{
-					SamplesPerSecond = Sound.SampleRate,
-					BitsPerSample = Sound.BytesPerSample * 8,
-					Channels = Sound.ChannelCount,
-					FormatTag = WaveFormatTag.Pcm,
-					BlockAlignment = Sound.BlockAlign,
-					AverageBytesPerSecond = Sound.SampleRate * Sound.BlockAlign
-				};
-
-			_sourceVoice = new SourceVoice(_device, format);
+			_sourceVoice = _device.CreateSourceVoice(new WaveFormat(Sound.SampleRate, Sound.ChannelCount));
 
 			_bufferPool = new BufferPool();
 			_runningSamplesQueued = 0;
@@ -101,7 +83,7 @@ namespace BizHawk.Client.EmuHawk
 		{
 			bool isInitializing = _runningSamplesQueued == 0;
 			bool detectedUnderrun = !isInitializing && _sourceVoice.State.BuffersQueued == 0;
-			long samplesAwaitingPlayback = _runningSamplesQueued - _sourceVoice.State.SamplesPlayed;
+			long samplesAwaitingPlayback = _runningSamplesQueued - (long)_sourceVoice.State.SamplesPlayed;
 			int samplesNeeded = (int)Math.Max(BufferSizeSamples - samplesAwaitingPlayback, 0);
 			if (isInitializing || detectedUnderrun)
 			{
@@ -115,10 +97,10 @@ namespace BizHawk.Client.EmuHawk
 			if (sampleCount == 0) return;
 			_bufferPool.Release(_sourceVoice.State.BuffersQueued);
 			int byteCount = sampleCount * Sound.BlockAlign;
-			var item = _bufferPool.Obtain(byteCount);
-			Buffer.BlockCopy(samples, sampleOffset * Sound.BlockAlign, item.Bytes, 0, byteCount);
-			item.AudioBuffer.AudioBytes = byteCount;
-			_sourceVoice.SubmitSourceBuffer(item.AudioBuffer);
+			AudioBuffer buffer = _bufferPool.Obtain(byteCount).Buffer;
+			Marshal.Copy(samples, sampleOffset * Sound.ChannelCount, buffer.AudioDataPointer, sampleCount * Sound.ChannelCount);
+			buffer.AudioBytes = byteCount;
+			_sourceVoice.SubmitSourceBuffer(buffer);
 			_runningSamplesQueued += sampleCount;
 		}
 
@@ -129,11 +111,6 @@ namespace BizHawk.Client.EmuHawk
 
 			public void Dispose()
 			{
-				foreach (BufferPoolItem item in _availableItems.Concat(_obtainedItems))
-				{
-					item.AudioBuffer.AudioData.Dispose();
-					item.AudioBuffer.Dispose();
-				}
 				_availableItems.Clear();
 				_obtainedItems.Clear();
 			}
@@ -168,17 +145,12 @@ namespace BizHawk.Client.EmuHawk
 			public class BufferPoolItem
 			{
 				public int MaxLength { get; }
-				public byte[] Bytes { get; }
-				public AudioBuffer AudioBuffer { get; }
+				public AudioBuffer Buffer { get; }
 
 				public BufferPoolItem(int length)
 				{
 					MaxLength = length;
-					Bytes = new byte[MaxLength];
-					AudioBuffer = new AudioBuffer
-					{
-						AudioData = new DataStream(Bytes, true, false)
-					};
+					Buffer = new AudioBuffer(length, BufferFlags.None);
 				}
 			}
 		}
